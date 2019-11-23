@@ -2,12 +2,19 @@ console.log("Hello World!");
 const express = require('express');
 const server = express();
 const data = require('./data');
+const body_parser = require('body-parser');
 
-server.get("/news", (req, res) => {
+server.use(body_parser.json());
+
+server.get("/", (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
+server.get("/api/news", (req, res) => {
   res.json(data);
 });
 
-server.get("/news/:id", (req, res) => {
+server.get("/api/news/:id", (req, res) => {
   const newsId = req.params.id;
   const news = data.find(item => item.id === newsId);
 
@@ -18,8 +25,13 @@ server.get("/news/:id", (req, res) => {
   }
 });
 
-server.get("/", (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+server.post("/api/news", (req, res) => {
+  const news = req.body;
+  console.log('Adding a news: ', news);
+
+  data.push(news);
+
+  res.sendStatus(200);
 });
 
 const port = 4000;

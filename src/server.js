@@ -53,6 +53,18 @@ server.put("/api/news/:id", (req, res) => {
   res.sendStatus(200);
 });
 
+server.delete("/api/news/:id", (req, res) => {
+  const newsId = req.params.id;
+
+  console.log("Delete news with id: ", newsId);
+
+  const filtered_list = data.filter(news => news.id !== newsId);
+
+  data = filtered_list;
+
+  res.sendStatus(200);
+});
+
 const port = 4000;
 
 server.listen(port, () => {

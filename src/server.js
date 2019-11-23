@@ -17,7 +17,6 @@ server.get("/api/news", (req, res) => {
 server.get("/api/news/:id", (req, res) => {
   const newsId = req.params.id;
   const news = data.find(item => item.id === newsId);
-
   if (news) {
     res.json(news);
   } else {
@@ -31,7 +30,7 @@ server.post("/api/news", (req, res) => {
 
   data.push(news);
 
-  res.sendStatus(200);
+  res.sendStatus(201);
 });
 
 server.put("/api/news/:id", (req, res) => {
@@ -63,6 +62,11 @@ server.delete("/api/news/:id", (req, res) => {
   data = filtered_list;
 
   res.sendStatus(200);
+});
+
+server.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!')
 });
 
 const port = 4000;

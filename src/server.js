@@ -3,8 +3,20 @@ const express = require('express');
 const server = express();
 let data = require('./data');
 const body_parser = require('body-parser');
+const winston = require('winston');
+const  expressWinston = require('express-winston');
 
 server.use(body_parser.json());
+
+server.use(expressWinston.logger({
+  transports: [
+    new winston.transports.Console()
+  ],
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.json()
+  ),
+}));
 
 server.get("/", (req, res) => {
   res.sendFile(__dirname + '/index.html');
@@ -68,6 +80,8 @@ server.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!')
 });
+
+
 
 const port = 4000;
 

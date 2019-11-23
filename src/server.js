@@ -1,9 +1,21 @@
 console.log("Hello World!");
 const express = require('express');
 const server = express();
+const data = require('./data');
 
-server.get("/json", (req, res) => {
-  res.json({ message: "Hello world" });
+server.get("/news", (req, res) => {
+  res.json(data);
+});
+
+server.get("/news/:id", (req, res) => {
+  const newsId = req.params.id;
+  const news = data.find(item => item.id === newsId);
+
+  if (news) {
+    res.json(news);
+  } else {
+    res.sendStatus(404);
+  }
 });
 
 server.get("/", (req, res) => {
@@ -16,20 +28,5 @@ server.listen(port, () => {
   console.log(`Server listening at ${port}`);
 });
 
-// let data = require('./data');
-//
-// server.get("/items", (req, res) => {
-//   res.json(data);
-// });
-//
-// server.get("/items/:id", (req, res) => {
-//   const itemId = req.params.id;
-//   const item = data.find(_item => _item.id === itemId);
-//
-//   if (item) {
-//     res.json(item);
-//   } else {
-//     res.json({ message: `item ${itemId} doesn't exist`})
-//   }
-// });
+
 

@@ -1,7 +1,7 @@
 console.log("Hello World!");
 const express = require('express');
 const server = express();
-const data = require('./data');
+let data = require('./data');
 const body_parser = require('body-parser');
 
 server.use(body_parser.json());
@@ -30,6 +30,25 @@ server.post("/api/news", (req, res) => {
   console.log('Adding a news: ', news);
 
   data.push(news);
+
+  res.sendStatus(200);
+});
+
+server.put("/api/news/:id", (req, res) => {
+  const newsId = req.params.id;
+  const news = req.body;
+  console.log("Editing news: ", newsId, " to be ", news);
+
+  const updatedListNews = [];
+  data.forEach(oldNews => {
+    if (oldNews.id === newsId) {
+      updatedListNews.push(news);
+    } else {
+      updatedListNews.push(oldNews);
+    }
+  });
+
+  data = updatedListNews;
 
   res.sendStatus(200);
 });

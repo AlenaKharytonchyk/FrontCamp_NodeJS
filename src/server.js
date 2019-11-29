@@ -1,10 +1,9 @@
-console.log("Hello World!");
 const express = require('express');
-const server = express();
 let data = require('./data');
 const body_parser = require('body-parser');
 const winston = require('winston');
 const  expressWinston = require('express-winston');
+const server = express();
 
 server.use(body_parser.json());
 

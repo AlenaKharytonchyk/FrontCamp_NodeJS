@@ -7,6 +7,118 @@ const server = express();
 const News = require('./mongoJs');
 const jsonParser = express.json();
 
+// ------------Passport----------------
+const port = process.env.PORT || 3000;
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const mongoose = require('mongoose');
+const passport = require('passport');
+const User = require('./models/user');
+
+// Connect to DB
+// mongoose.connect('mongodb://localhost/loginapp');
+// const db = mongoose.connection;
+
+// BodyParser Middleware
+server.use(bodyParser.json());
+server.use(bodyParser.urlencoded({ extended: false }));
+server.use(cookieParser());
+
+// Express Session
+server.use(session({
+  secret: 'secret',
+  saveUninitialized: true,
+  resave: true
+}));
+
+// Passport init
+server.use(passport.initialize());
+server.use(passport.session());
+
+// Register User
+server.post('/api/register', function(req, res){
+  let password = req.body.password;
+  let password2 = req.body.password2;
+
+  if (password == password2){
+    const newUser = new User({
+      name: req.body.name,
+      email: req.body.email,
+      username: req.body.username,
+      password: req.body.password
+    });
+
+    User.createUser(newUser, function(err, user){
+      if(err) throw err;
+      res.send(user).end()
+    });
+  } else{
+    res.status(500).send("{errors: \"Passwords don't match\"}").end()
+  }
+});
+
+// server.listen(port, () => console.log(`server listening on port ${port}!`));
+
+const LocalStrategy = require('passport-local').Strategy;
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+    User.getUserByUsername(username, function(err, user){
+      if(err) throw err;
+      if(!user){
+        return done(null, false, {message: 'Unknown User'});
+      }
+      User.comparePassword(password, user.password, function(err, isMatch){
+        if(err) throw err;
+        if(isMatch){
+          return done(null, user);
+        } else {
+          return done(null, false, {message: 'Invalid password'});
+        }
+      });
+    });
+  }
+));
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  User.getUserById(id, function(err, user) {
+    done(err, user);
+  });
+});
+
+const authenticate = passport.authenticate('local');
+const mustAuthenticate = (req, res, next) => {
+  if(!req.isAuthenticated()){
+    return res.sendStatus(401); // code "Unauthorized";
+  }
+  next();
+};
+
+// Endpoint to login
+server.post('/login',
+  authenticate,
+  function(req, res) {
+    res.json(req.user);
+  }
+);
+
+// Endpoint to get current user
+server.get('/user', mustAuthenticate, function(req, res){
+  res.send(req.user);
+});
+
+
+// Endpoint to logout
+server.get('/logout', mustAuthenticate, function(req, res){
+  req.logout();
+  res.send(null)
+});
+
+// ------------Passport----------------
 server.use(body_parser.json());
 
 server.use(expressWinston.logger({
@@ -40,7 +152,7 @@ server.get("/api/news/:id", (req, res) => {
   });
 });
 
-server.post("/api/news", (req, res) => {
+server.post("/api/news", mustAuthenticate, (req, res) => {
   const news = req.body;
   console.log('Adding a news: ', news);
 
@@ -56,7 +168,7 @@ server.post("/api/news", (req, res) => {
 
 });
 
-server.put("/api/news",(req, res) => {
+server.put("/api/news", mustAuthenticate, (req, res) => {
   if(!req.body) return res.sendStatus(400);
 
   News.findOneAndUpdate({id: 'tt0110357'}, { $set: { name: req.body.name, genre: req.body.genre}},
@@ -82,10 +194,8 @@ server.use((err, req, res, next) => {
 
 
 
-const port = 4000;
-
-server.listen(port, () => {
-  console.log(`Server listening at ${port}`);
+server.listen(4000, () => {
+  console.log(`Server listening at 4000`);
 });
 
 

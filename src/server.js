@@ -4,6 +4,8 @@ const body_parser = require('body-parser');
 const winston = require('winston');
 const  expressWinston = require('express-winston');
 const server = express();
+const News = require('./mongoJs');
+const jsonParser = express.json();
 
 server.use(body_parser.json());
 
@@ -23,57 +25,54 @@ server.get("/", (req, res) => {
 });
 
 server.get("/api/news", (req, res) => {
-  res.json(data);
+  News.find({}, function(err, news){
+    if(err) return console.log(err);
+    res.json(news)
+  });
 });
 
 server.get("/api/news/:id", (req, res) => {
   const newsId = req.params.id;
-  const news = data.find(item => item.id === newsId);
-  if (news) {
-    res.json(news);
-  } else {
-    res.sendStatus(404);
-  }
+  News.findOne({id: newsId}, function(err, news){
+
+    if(err) return console.log(err);
+    res.send(news);
+  });
 });
 
 server.post("/api/news", (req, res) => {
   const news = req.body;
   console.log('Adding a news: ', news);
 
-  data.push(news);
+  const newsName = req.body.name;
+  const newsGenre = req.body.genre;
+  const newsId = req.body.id;
+  const user = new News({name: newsName, genre: newsGenre, id: newsId});
 
-  res.sendStatus(201);
-});
-
-server.put("/api/news/:id", (req, res) => {
-  const newsId = req.params.id;
-  const news = req.body;
-  console.log("Editing news: ", newsId, " to be ", news);
-
-  const updatedListNews = [];
-  data.forEach(oldNews => {
-    if (oldNews.id === newsId) {
-      updatedListNews.push(news);
-    } else {
-      updatedListNews.push(oldNews);
-    }
+  user.save(function(err){
+    if(err) return console.log(err);
+    res.sendStatus(201);
   });
 
-  data = updatedListNews;
+});
 
-  res.sendStatus(200);
+server.put("/api/news",(req, res) => {
+  if(!req.body) return res.sendStatus(400);
+
+  News.findOneAndUpdate({id: 'tt0110357'}, { $set: { name: req.body.name, genre: req.body.genre}},
+    {new: true}, function(err){
+    if(err) return console.log(err);
+    res.sendStatus(200);
+  });
 });
 
 server.delete("/api/news/:id", (req, res) => {
   const newsId = req.params.id;
+  News.findOneAndDelete( {id: newsId}, function(err){
 
-  console.log("Delete news with id: ", newsId);
-
-  const filtered_list = data.filter(news => news.id !== newsId);
-
-  data = filtered_list;
-
-  res.sendStatus(200);
+    if(err) return console.log(err);
+    res.sendStatus(200);
+  });
 });
 
 server.use((err, req, res, next) => {

@@ -58,8 +58,6 @@ server.post('/api/register', function(req, res){
   }
 });
 
-// server.listen(port, () => console.log(`server listening on port ${port}!`));
-
 const LocalStrategy = require('passport-local').Strategy;
 passport.use(new LocalStrategy(
   function(username, password, done) {
@@ -76,6 +74,19 @@ passport.use(new LocalStrategy(
           return done(null, false, {message: 'Invalid password'});
         }
       });
+    });
+  }
+));
+
+const FacebookStrategy = require('passport-facebook').Strategy;
+passport.use(new FacebookStrategy({
+    clientID: process.env.FB_APP_ID,
+    clientSecret: process.env.FB_APP_SECRET,
+    callbackURL: "http://localhost:4000/auth/facebook/callback"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ facebookId: profile.id }, function (err, user) {
+      return cb(err, user);
     });
   }
 ));
@@ -99,7 +110,7 @@ const mustAuthenticate = (req, res, next) => {
 };
 
 // Endpoint to login
-server.post('/login',
+server.post('/api/login',
   authenticate,
   function(req, res) {
     res.json(req.user);
@@ -107,15 +118,26 @@ server.post('/login',
 );
 
 // Endpoint to get current user
-server.get('/user', mustAuthenticate, function(req, res){
+server.get('/api/user', mustAuthenticate, function(req, res){
   res.send(req.user);
 });
 
 
 // Endpoint to logout
-server.get('/logout', mustAuthenticate, function(req, res){
+server.get('/api/logout', mustAuthenticate, function(req, res){
   req.logout();
   res.send(null)
+});
+
+server.get('/auth/facebook', passport.authenticate('facebook'), (req, res) => {
+  console.log(req);
+  res.json(req);
+});
+
+server.get('/auth/facebook/callback',
+  passport.authenticate('facebook', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/');
 });
 
 // ------------Passport----------------

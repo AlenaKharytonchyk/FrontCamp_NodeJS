@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const findOrCreate = require('mongoose-findorcreate');
 
 // User Schema
 const UserSchema = mongoose.Schema({
@@ -15,8 +16,13 @@ const UserSchema = mongoose.Schema({
   },
   name: {
     type: String
+  },
+  facebookId: {
+    type: String
   }
 });
+
+UserSchema.plugin(findOrCreate);
 
 const User = module.exports = mongoose.model('User', UserSchema);
 
